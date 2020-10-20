@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+    </head>
+    <body>
+        <canvas id="canvas" width="300px" height="1080px"></canvas>
+        <style>
+            html, body {
+                background-color: #4dc3c3;
+                overflow: hidden;
+            }
+            canvas {
+                position: absolute;
+                left: 50%; top: 50%;
+                transform: translate(-50%, -50%);
+            }
+        </style>
+        <script>
+            const canvas = document.getElementById("canvas");
+            const ctx = canvas.getContext("2d");
+            
+            function sleep(ms) {
+                return new Promise(res => setTimeout(res, ms));
+            }
+
+            function getMousePos(canvas, evt) {
+                let rect = canvas.getBoundingClientRect();
+                return {
+                    x: evt.clientX - rect.left,
+                    y: evt.clientY - rect.top
+                };
+            }
+
+            let prvMouseYPos = 0;
+            let movingMouseYPos = 0;
+            let lastMouseYPos = 0;
+            let prvTissuePos = 390;
+            let isDownNow = false;
+            let tissueYPos = 390;
+            let broken = false;
+
+            let velocity = 0;
+    
+            ctx.imageSmoothingEnabled = false;
+
+            let sprite = new Image();
+            sprite.src = "sprites.png";
+
+            canvas.onmousemove = evt => {
+                movingMouseYPos = getMousePos(canvas, evt).y;
+            }
+
+            canvas.onmousedown = () => {
+                isDownNow = true;
+                prvTissuePos = tissueYPos;
+                prvMouseYPos = movingMouseYPos;
+            }
+
+            canvas.onmouseup = () => {
+                isDownNow = false;
+            }
+
+            canvas.onclick = () => {
+                if(broken) {
+                    prvMouseYPos = 0;
+                    movingMouseYPos = 0;
+                    lastMouseYPos = 0;
+                    prvTissuePos = 390;
+                    isDownNow = false;
+                    tissueYPos = 390;
+                    velocity = 5;
+
+                    broken = false;
+                }
+            }
+
+            setInterval(() => {
+                if(broken) {
+                    canvas.style.cursor = "pointer";
+
+                    ctx.clearRect(0, 0, 300, 1080);
+                    ctx.drawImage(
+                        sprite,
+                        64, 32, 32, 32,
+                        0, 380,
+                        300, 300
+                    );
+                    return;
+                }
+
+                if(isDownNow) {
+                    canvas.style.cursor = "grabbing";
+
+                    velocity = movingMouseYPos - lastMouseYPos;
+                    if(prvTissuePos + movingMouseYPos - prvMouseYPos >= 390) {
+                        tissueYPos = prvTissuePos + movingMouseYPos - prvMouseYPos;
+                    }
+                }
+                else {
+                    canvas.style.cursor = "grab";
+
+                    if(tissueYPos + velocity >= 390) {
+                        tissueYPos += velocity;
+                    }
+                    velocity -= velocity / 20
+                }
+
+                if(tissueYPos > 15000) {
+                    broken = true;                    
+                    ctx.clearRect(0, 0, 300, 1080);
+                }
+
+                ctx.clearRect(0, 0, 300, 1080);
+
+                if((tissueYPos - 12) % 169 <= 24) {
+                    ctx.drawImage(
+                        sprite,
+                        32 * Math.floor(((tissueYPos - 12) % 169 / 7) % 4), 0, 32, 32,
+                        0, 380,
+                        300, 300
+                    );
+                }
+                else {
+                    ctx.drawImage(
+                        sprite,
+                        0, 0, 32, 32,
+                        0, 380,
+                        300, 300
+                    );
+                }
+                ctx.drawImage(sprite, 0, 32, 32, 32, 0, tissueYPos - 12, 300, 300);
+
+                let tissueCnt = Math.floor((tissueYPos - 12) / 169)
+                for(let i = 0; i < tissueCnt - 1; i++) {
+                    let relativePos = tissueYPos - i * 169
+                    if(i == tissueCnt - 2) {
+                        ctx.drawImage(
+                            sprite,
+                            32, 48 - ((relativePos - 390) * 0.11), 32, 18,
+                            0, 485,
+                            300, 169
+                        );
+                    }
+                    else ctx.drawImage(sprite, 32, 32, 32, 18, 0, relativePos - 53, 300, 169);
+                }
+                lastMouseYPos = movingMouseYPos;
+            }, 15);
+        </script>
+    </body>
+</html>
