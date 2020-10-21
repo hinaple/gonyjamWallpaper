@@ -41,11 +41,19 @@
             let broken = false;
 
             let velocity = 0;
+
+            let isInfiniteTissue = true;
     
             ctx.imageSmoothingEnabled = false;
 
             let sprite = new Image();
             sprite.src = "sprites.png";
+
+            window.wallpaperPropertyListener = {
+                applyUserProperties: properties => {
+                    isInfiniteTissue = properties.isinfinitetissue.value;
+                }
+            }
 
             canvas.onmousemove = evt => {
                 movingMouseYPos = getMousePos(canvas, evt).y;
@@ -77,8 +85,6 @@
 
             setInterval(() => {
                 if(broken) {
-                    canvas.style.cursor = "pointer";
-
                     ctx.clearRect(0, 0, 300, 1080);
                     ctx.drawImage(
                         sprite,
@@ -90,24 +96,20 @@
                 }
 
                 if(isDownNow) {
-                    canvas.style.cursor = "grabbing";
-
                     velocity = movingMouseYPos - lastMouseYPos;
                     if(prvTissuePos + movingMouseYPos - prvMouseYPos >= 390) {
                         tissueYPos = prvTissuePos + movingMouseYPos - prvMouseYPos;
                     }
                 }
                 else {
-                    canvas.style.cursor = "grab";
-
                     if(tissueYPos + velocity >= 390) {
                         tissueYPos += velocity;
                     }
                     velocity -= velocity / 20
                 }
 
-                if(tissueYPos > 15000) {
-                    broken = true;                    
+                if(tissueYPos > 15000 && !isInfiniteTissue) {
+                    broken = true;
                     ctx.clearRect(0, 0, 300, 1080);
                 }
 
